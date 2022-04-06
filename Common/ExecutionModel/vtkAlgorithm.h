@@ -716,7 +716,7 @@ public:
   void* GetMfaBlock();
   bool GetUseMfa();
   /**
-   * Lighting info and their retrun function
+   * Lighting info and their return function
    */
   double _lightDirection[3];
   double _viewDirection[3];
