@@ -708,6 +708,31 @@ public:
   vtkGetObjectMacro(ProgressObserver, vtkProgressObserver);
   //@}
 
+  /**
+   * Retrieving MFA related info
+   *
+   */ 
+  int GetMfaSize();
+  void* GetMfaBlock();
+  bool GetUseMfa();
+  /**
+   * Lighting info and their retrun function
+   */
+  double _lightDirection[3];
+  double _viewDirection[3];
+  double _lightAmbientColor[3];
+  double _lightDiffuseColor[3];
+  double _lightSpecularColor[3];
+  double _lightIntensity;
+  double _material[4];
+  double* GetLightDirection() { return _lightDirection; }         // double[3]
+  double* GetViewDirection() { return _viewDirection; }           // double[3]
+  double* GetLightAmbientColor() { return _lightAmbientColor; }   // double[3] 
+  double* GetLightDiffuseColor() { return _lightDiffuseColor; }   // double[3] 
+  double* GetLightSpecularColor() { return _lightSpecularColor; } // double[3]
+  double  GetLightIntensity() { return _lightIntensity; }         // double
+  double* GetMaterial() { return _material; }                     // double[4]
+
 protected:
   vtkAlgorithm();
   ~vtkAlgorithm() override;
@@ -900,6 +925,10 @@ private:
     vtkAlgorithm* producer, int producerPort, vtkAlgorithm* consumer, int consumerPort);
   static void ConnectionRemoveAllInput(vtkAlgorithm* consumer, int port);
   static void ConnectionRemoveAllOutput(vtkAlgorithm* producer, int port);
+
+  void* MfaBlock;
+  bool useMFA = false;
+  int MfaSize;
 
 private:
   vtkAlgorithm(const vtkAlgorithm&) = delete;
