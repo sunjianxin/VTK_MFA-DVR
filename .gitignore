@@ -22,3 +22,6 @@ CMakeSettings.json
 
 # Exclude Build Folder
 build
+
+# Exlude swp files
+*.swp

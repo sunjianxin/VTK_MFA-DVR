@@ -404,6 +404,11 @@ public:
   virtual void SetInputConnection(vtkAlgorithmOutput* input);
   //@}
 
+  /**
+   * Interface of passing MFA model to mapper for query.
+   */
+  void SetMFAInputConnection(void* master, bool useMFA, int size);
+
   //@{
   /**
    * Add a connection to the given input port index.  See

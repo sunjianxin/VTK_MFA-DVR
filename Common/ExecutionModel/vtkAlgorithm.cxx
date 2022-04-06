@@ -1044,6 +1044,26 @@ void vtkAlgorithm::SetInputConnection(int port, vtkAlgorithmOutput* input)
   this->Modified();
 }
 
+//------------------------------------------------------------------------------
+void vtkAlgorithm::SetMFAInputConnection(void* block, bool useMFA, int size)
+{
+  this->MfaBlock = block;
+  this->useMFA = useMFA;
+  this->MfaSize = size;
+}
+
+int vtkAlgorithm::GetMfaSize() {
+  return MfaSize;
+}
+
+void* vtkAlgorithm::GetMfaBlock() {
+  return MfaBlock;
+}
+
+bool vtkAlgorithm::GetUseMfa() {
+  return useMFA;
+}
+
 //----------------------------------------------------------------------------
 void vtkAlgorithm::AddInputConnection(vtkAlgorithmOutput* input)
 {
