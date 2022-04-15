@@ -1,89 +1,31 @@
-![VTK - The Visualization Toolkit][vtk-banner]
+## MFA-DVR: *Direct Volume Rendering of MFA Models*
+Created by <a href="https://github.com/sunjianxin" target="_blank">Jianxin Sun</a>, <a href="http://vis.unl.edu/~yu/" target="_blank">Hongfeng Yu</a> from University of Nebraska-Lincoln, and <a href="https://mathweb.ucsd.edu/~dlenz/" target="_blank">David Lenz</a>, <a href="https://www.mcs.anl.gov/~tpeterka/" target="_blank">Tom Peterka</a> from Argonne National Laboratory
 
-Introduction
-============
+![results](https://github.com/sunjianxin/VTK_MFA-DVR/blob/master/doc/teaser.png)
 
-VTK is an open-source software system for image processing, 3D
-graphics, volume rendering and visualization. VTK includes many
-advanced algorithms (e.g., surface reconstruction, implicit modeling,
-decimation) and rendering techniques (e.g., hardware-accelerated
-volume rendering, LOD control).
+### Introduction
+This work is the implementation of MFA-DVR, direct volume rendering pipeline using MFA model, on top of <a href="https://github.com/Kitware/VTK" target="_blank">VTK</a> for best accessibility to scieintific visualization community. The VTK version used is 9.0.3. 
+   
+### Installation
+1. Get VTK_MFA-DVR source code
+```bash
+git clone https://github.com/sunjianxin/VTK_MFA-DVR.git
+```
+2. Configure VTK_FMA-DVR using ccmake
+	* Initialize the cache by typing ‘c’ for configure.
+	* Turn on BUILD_EXAMPLES and BUILD_SHARED_LIBS.
+	* Replace Debug by Release under CMAKE_BUILD_TYPE.
+	* Once this is done type ‘c’ again.
+	* Type ‘c’ one last time to rerun the configuration with those parameters.
+	* Type ‘g’. CMake should exit after having generated a Makefile
+```bash
+cd VTK_MFA-DVR
+mkdir build
+cd build
+ccmake ..
+```
+3. Build and install
+```bash
+make install
+```
 
-VTK is used by academicians for teaching and research; by government
-research institutions such as Los Alamos National Lab in the US or
-CINECA in Italy; and by many commercial firms who use VTK to build or
-extend products.
-
-The origin of VTK is with the textbook "The Visualization Toolkit, an
-Object-Oriented Approach to 3D Graphics" originally published by
-Prentice Hall and now published by Kitware, Inc. (Third Edition ISBN
-1-930934-07-6). VTK has grown (since its initial release in 1994) to a
-world-wide user base in the commercial, academic, and research
-communities.
-
-Learning Resources
-==================
-
-* General information is available at the [VTK Homepage][vtk-homepage].
-
-* Community discussion takes place on the [VTK Discourse][vtk-discourse] forum.
-
-* Commercial [support][kitware-support] and [training][kitware-training]
-  are available from [Kitware][kitware].
-
-* Doxygen-generated nightly reference documentation is
-  available [online][vtk-doxygen].
-
-Reporting Bugs
-==============
-
-If you have found a bug:
-
-1. If you have a patch, please read the [CONTRIBUTING.md][vtk-contributing] document.
-
-2. Otherwise, please join the [VTK Discourse][vtk-discourse] forum and ask
-   about the expected and observed behaviors to determine if it is
-   really a bug.
-
-3. Finally, if the issue is not resolved by the above steps, open
-   an entry in the [VTK Issue Tracker][vtk-issues].
-
-Requirements
-============
-
-In general VTK tries to be as portable as possible; the specific configurations below are known to work and tested.
-
-VTK supports the following C++11 compilers:
-1. Microsoft Visual Studio 2015 or newer
-2. gcc 4.8.3 or newer
-3. Clang 3.3 or newer
-4. Apple Clang 5.0 (from Xcode 5.0) or newer
-5. Intel 14.0 or newer
-
-VTK supports the following operating systems:
-1. Windows Vista or newer
-2. Mac OS X 10.7 or newer
-3. Linux (ex: Ubuntu 12.04 or newer, Debian 4 or newer)
-
-Contributing
-============
-
-See [CONTRIBUTING.md][vtk-contributing] for instructions to contribute.
-
-License
-=======
-
-VTK is distributed under the OSI-approved BSD 3-clause License.
-See [Copyright.txt][vtk-copyright] for details.
-
-
-[kitware]: https://www.kitware.com/
-[kitware-support]: https://www.kitware.com/what-we-offer/#support
-[kitware-training]: https://www.kitware.com/what-we-offer/#training
-[vtk-banner]: vtkBanner.gif
-[vtk-contributing]: CONTRIBUTING.md#contributing-to-vtk
-[vtk-copyright]: Copyright.txt
-[vtk-discourse]: https://discourse.vtk.org/
-[vtk-doxygen]: https://www.vtk.org/doc/nightly/html
-[vtk-homepage]: https://www.vtk.org/
-[vtk-issues]: https://gitlab.kitware.com/vtk/vtk/issues
