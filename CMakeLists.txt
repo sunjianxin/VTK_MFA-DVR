@@ -26,6 +26,13 @@ if (APPLE)
   include(vtkApple)
 endif ()
 
+include_directories("../mfa/include/mfa")
+include_directories("../mfa/include/cppoptlib/include")
+include_directories("../mfa/include/diy/include")
+include_directories("../mfa/include/eigen3")
+include_directories("/Library/Developer/CommandLineTools/usr/include")
+add_definitions (-DMFA_NO_WEIGHTS)
+
 # must be before the following iOS / Android
 include(vtkVersion)
 set(VTK_VERSION

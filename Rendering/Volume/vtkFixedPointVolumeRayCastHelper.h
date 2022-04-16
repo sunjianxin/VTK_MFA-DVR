@@ -1269,6 +1269,62 @@
     }                                                                                              \
   }
 
+#define MFARCHelper_InitializationValue()                                                          \
+  /* Retrieve MFA reference pointer */                                                             \
+  Block<real_t>* b = (Block<real_t>*)(mapper->GetMfaBlock());                                      \
+  mfa::MFA_Data<real_t>& mfa_data = *(b->vars[0].mfa_data);                                        \
+  TensorProduct<real_t>&  t = mfa_data.tmesh.tensor_prods[0];                                      \
+  mfa::Decoder<real_t> decoder(mfa_data, 0);                                                       \
+  mfa::FastDecodeInfo<real_t> di(decoder);                                                         \
+  /* Retrieve dataset size and update scalar for POS */                                            \
+  int size =  mapper->GetMfaSize() - 1;                                                            \
+  /* std::string dataset =  mapper->GetDataset(); */                                               \
+  double recip = 1 / ((size*32767.0) + 0.5);                                                       \
+  /* Place holder for getting value */                                                             \
+  VectorX<double> param(3);                                                                        \
+  VectorX<double> out_pt(1);                                                                       \
+  unsigned short val_2;                                                                            \
+  double bounds_lower = b->bounds_mins[3];                                                         \
+  double bounds_upper = b->bounds_maxs[3];                                                         \
+  real_t value_extent_recip = 1 / (bounds_upper - bounds_lower);
+
+
+#define MFARCHelper_Decode_ColorScalar(VAL)                                                        \
+  param(0) = pos[0] * recip;                                                                       \
+  param(1) = pos[1] * recip;                                                                       \
+  param(2) = pos[2] * recip;                                                                       \
+  decoder.FastVolPt(param, out_pt, di, t);                                                         \
+  /* Normalize value */                                                                            \
+  double v = out_pt[0];                                                                            \
+  double ratio;                                                                                    \
+  ratio = (v - bounds_lower)*value_extent_recip;                                                   \
+  if (ratio > 1) {                                                                                 \
+      ratio = 1;                                                                                   \
+  }                                                                                                \
+  if (ratio < 0) {                                                                                 \
+      ratio = 0;                                                                                   \
+  }                                                                                                \
+  unsigned short new_val = (unsigned short)(255*ratio);                                            \
+  VAL = new_val;
+
+
+#define MFARCHelper_Decode_NonColorScalar(VAL)                                                     \
+  param(0) = pos[0] * recip;                                                                       \
+  param(1) = pos[1] * recip;                                                                       \
+  param(2) = pos[2] * recip;                                                                       \
+  decoder.FastVolPt(param, out_pt, di, t);                                                         \
+  /* Normalize value */                                                                            \
+  double v = out_pt[0];                                                                            \
+  /* scale real value to index of the color and opacity table range: [0, 32767] */                 \
+  VAL = (unsigned short)((v + shift[0])*scale[0]);                                                 \
+  /* verify the VAL and make sure it falls in the range of color and opacity table: [0, 32767] */  \
+  if (VAL > 32767) {                                                                               \
+    VAL = 32767;                                                                                   \
+  }                                                                                                \
+  if (VAL < 0) {                                                                                   \
+    VAL = 0;                                                                                       \
+  }
+
 #define VTKKWRCHelper_MIPSpaceLeapCheckMulti(COMP, FLIP) mmvalid[COMP]
 
 #include "vtkObject.h"

@@ -27,6 +27,15 @@
 
 #include <cmath>
 
+#include "../../../mfa/include/mfa/mfa.hpp"
+// #include "/Users/jianxinsun/research/intern/mfa/include/mfa/mfa.hpp"
+#include "../../../mfa/include/diy/include/diy/master.hpp"
+#include "../../external/config.h"
+#if !defined(SHADEON)
+#include "../../external/opts.h"
+#include "../../external/block.hpp"
+#endif
+
 vtkStandardNewMacro(vtkFixedPointVolumeRayCastCompositeHelper);
 
 // Construct a new vtkFixedPointVolumeRayCastCompositeHelper with default values
@@ -275,6 +284,9 @@ template <class T>
 void vtkFixedPointCompositeHelperGenerateImageOneSimpleTrilin(T* data, int threadID,
   int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vtkNotUsed(vol))
 {
+  if (threadID == 0) {
+    cerr << "Trilinear non-shading simple" << threadID << endl;
+  }
   VTKKWRCHelper_InitializationAndLoopStartTrilin();
   VTKKWRCHelper_InitializeCompositeOneTrilin();
   VTKKWRCHelper_SpaceLeapSetup();
@@ -312,6 +324,43 @@ void vtkFixedPointCompositeHelperGenerateImageOneSimpleTrilin(T* data, int threa
   VTKKWRCHelper_IncrementAndLoopEnd();
 }
 
+
+// This is the MFA version of the method above
+template <class T>
+void vtkFixedPointCompositeHelperGenerateImageOneSimpleTrilinMfa(T* data, int threadID,
+  int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vtkNotUsed(vol))
+{
+#if !defined(SHADEON)
+  if (threadID == 0) {
+    cerr << "MFA non-shading simple" << threadID << endl;
+  }
+
+  MFARCHelper_InitializationValue();
+
+  VTKKWRCHelper_InitializationAndLoopStartTrilin();
+  VTKKWRCHelper_InitializeCompositeOneTrilin();
+  // VTKKWRCHelper_SpaceLeapSetup(); // Disable for MFA-DVR
+
+  for (k = 0; k < numSteps; k++)
+  {
+    if (k)
+    {
+      mapper->FixedPointIncrement(pos, dir);
+    }
+
+    // VTKKWRCHelper_SpaceLeapCheck(); // Disable for MFA-DVR
+    // VTKKWRCHelper_CroppingCheckTrilin(pos);
+
+    MFARCHelper_Decode_ColorScalar(val);
+
+    VTKKWRCHelper_LookupColorUS(colorTable[0], scalarOpacityTable[0], val, tmp);
+    VTKKWRCHelper_CompositeColorAndCheckEarlyTermination(color, tmp, remainingOpacity);
+  }
+
+  VTKKWRCHelper_SetPixelColor(imagePtr, color, remainingOpacity);
+  VTKKWRCHelper_IncrementAndLoopEnd();
+#endif
+}
 // This method is used when the interpolation type is linear and the data
 // has one component and scale != 1.0 or shift != 0.0. In the inner loop we
 // get the data value for the eight cell corners (if we have changed cells)
@@ -326,6 +375,9 @@ template <class T>
 void vtkFixedPointCompositeHelperGenerateImageOneTrilin(T* data, int threadID, int threadCount,
   vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vtkNotUsed(vol))
 {
+  if (threadID == 0) {
+    cerr << "Trilinear non-shading non-simple" << threadID << endl;
+  }
   VTKKWRCHelper_InitializationAndLoopStartTrilin();
   VTKKWRCHelper_InitializeCompositeOneTrilin();
   VTKKWRCHelper_SpaceLeapSetup();
@@ -360,6 +412,43 @@ void vtkFixedPointCompositeHelperGenerateImageOneTrilin(T* data, int threadID, i
 
   VTKKWRCHelper_SetPixelColor(imagePtr, color, remainingOpacity);
   VTKKWRCHelper_IncrementAndLoopEnd();
+}
+
+// This is the MFA version of the method above
+template <class T>
+void vtkFixedPointCompositeHelperGenerateImageOneTrilinMfa(T* data, int threadID, int threadCount,
+  vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vtkNotUsed(vol))
+{
+#if !defined(SHADEON)
+  if (threadID == 0) {
+    cerr << "MFA non-shading non-simple" << threadID << endl;
+  }
+  
+  MFARCHelper_InitializationValue();
+
+  VTKKWRCHelper_InitializationAndLoopStartTrilin();
+  VTKKWRCHelper_InitializeCompositeOneTrilin();
+  // VTKKWRCHelper_SpaceLeapSetup(); // Disable for MFA-DVR
+
+  for (k = 0; k < numSteps; k++)
+  {
+    if (k)
+    {
+      mapper->FixedPointIncrement(pos, dir);
+    }
+
+    // VTKKWRCHelper_SpaceLeapCheck(); // Disable for MFA-DVR
+    // VTKKWRCHelper_CroppingCheckTrilin(pos);
+
+    MFARCHelper_Decode_NonColorScalar(val);
+
+    VTKKWRCHelper_LookupColorUS(colorTable[0], scalarOpacityTable[0], val, tmp);
+    VTKKWRCHelper_CompositeColorAndCheckEarlyTermination(color, tmp, remainingOpacity);
+  }
+
+  VTKKWRCHelper_SetPixelColor(imagePtr, color, remainingOpacity);
+  VTKKWRCHelper_IncrementAndLoopEnd();
+#endif
 }
 
 // This method is used when the interpolation type is linear, the data has
@@ -646,19 +735,35 @@ void vtkFixedPointVolumeRayCastCompositeHelper::GenerateImage(
       // Scale == 1.0 and shift == 0.0 - simple case (faster)
       if (mapper->GetTableScale()[0] == 1.0 && mapper->GetTableShift()[0] == 0.0)
       {
-        switch (scalarType)
-        {
-          vtkTemplateMacro(vtkFixedPointCompositeHelperGenerateImageOneSimpleTrilin(
-            static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+        if (!mapper->GetUseMfa()) {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeHelperGenerateImageOneSimpleTrilin(
+              static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
+        } else {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeHelperGenerateImageOneSimpleTrilinMfa(
+              static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
         }
       }
       // Scale != 1.0 or shift != 0.0 - must apply scale/shift in inner loop
       else
       {
-        switch (scalarType)
-        {
-          vtkTemplateMacro(vtkFixedPointCompositeHelperGenerateImageOneTrilin(
-            static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+        if (!mapper->GetUseMfa()) {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeHelperGenerateImageOneTrilin(
+              static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
+        } else {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeHelperGenerateImageOneTrilinMfa(
+              static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
         }
       }
     }

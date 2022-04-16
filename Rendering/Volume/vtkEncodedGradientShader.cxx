@@ -189,7 +189,8 @@ float* vtkEncodedGradientShader::GetBlueSpecularShadingTable(vtkVolume* vol)
 }
 
 void vtkEncodedGradientShader::UpdateShadingTable(
-  vtkRenderer* ren, vtkVolume* vol, vtkEncodedGradientEstimator* gradest)
+  // vtkRenderer* ren, vtkVolume* vol, vtkEncodedGradientEstimator* gradest)
+  vtkRenderer* ren, vtkVolume* vol, vtkEncodedGradientEstimator* gradest, double* _lightDirection, double* _viewDirection, double* _lightAmbientColor, double* _lightDiffuseColor, double* _lightSpecularColor, double& _lightIntensity, double* _material)
 {
   double lightDirection[3], material[4];
   double lightAmbientColor[3];
@@ -251,6 +252,8 @@ void vtkEncodedGradientShader::UpdateShadingTable(
   material[2] = property->GetSpecular(this->ActiveComponent);
   material[3] = property->GetSpecularPower(this->ActiveComponent);
 
+  memcpy(_material, material, 4 * sizeof(double));
+
   update_flag = 0;
 
   ren->GetActiveCamera()->GetPosition(cameraPosition);
@@ -288,6 +291,8 @@ void vtkEncodedGradientShader::UpdateShadingTable(
   viewDirection[1] -= zero[1];
   viewDirection[2] -= zero[2];
 
+  memcpy(_viewDirection, viewDirection, 3 * sizeof(double));
+
   // Loop through all lights and compute a shading table. For
   // the first light, pass in an update_flag of 0, which means
   // overwrite the shading table.  For each light after that, pass
@@ -324,6 +329,11 @@ void vtkEncodedGradientShader::UpdateShadingTable(
     light->GetTransformedFocalPoint(lightFocalPoint);
     lightIntensity = light->GetIntensity();
 
+    memcpy(_lightAmbientColor, lightAmbientColor, 3 * sizeof(double));
+    memcpy(_lightDiffuseColor, lightDiffuseColor, 3 * sizeof(double));
+    memcpy(_lightSpecularColor, lightSpecularColor, 3 * sizeof(double));
+    _lightIntensity = lightIntensity;
+
     // Compute the light direction and normalize it
     lightDirection[0] = lightFocalPoint[0] - lightPosition[0];
     lightDirection[1] = lightFocalPoint[1] - lightPosition[1];
@@ -341,6 +351,8 @@ void vtkEncodedGradientShader::UpdateShadingTable(
     lightDirection[0] = out[0] / out[3] - zero[0];
     lightDirection[1] = out[1] / out[3] - zero[1];
     lightDirection[2] = out[2] / out[3] - zero[2];
+
+    memcpy(_lightDirection, lightDirection, 3 * sizeof(double));
 
     // Build / Add to the shading table
     this->BuildShadingTable(index, lightDirection, lightAmbientColor, lightDiffuseColor,

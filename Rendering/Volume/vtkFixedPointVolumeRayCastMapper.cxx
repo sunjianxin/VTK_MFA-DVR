@@ -48,6 +48,8 @@
 #include <cmath>
 #include <exception>
 
+#include "../../external/config.h"
+
 vtkStandardNewMacro(vtkFixedPointVolumeRayCastMapper);
 vtkCxxSetObjectMacro(vtkFixedPointVolumeRayCastMapper, RayCastImage, vtkFixedPointRayCastImage);
 
@@ -2717,7 +2719,8 @@ int vtkFixedPointVolumeRayCastMapper::UpdateShadingTable(vtkRenderer* ren, vtkVo
   for (c = 0; c < ((vol->GetProperty()->GetIndependentComponents()) ? (components) : (1)); c++)
   {
     this->GradientShader->SetActiveComponent(c);
-    this->GradientShader->UpdateShadingTable(ren, vol, this->GradientEstimator);
+    // this->GradientShader->UpdateShadingTable(ren, vol, this->GradientEstimator);
+    this->GradientShader->UpdateShadingTable(ren, vol, this->GradientEstimator, _lightDirection, _viewDirection, _lightAmbientColor, _lightDiffuseColor, _lightSpecularColor, _lightIntensity, _material);
 
     float* r = this->GradientShader->GetRedDiffuseShadingTable(vol);
     float* g = this->GradientShader->GetGreenDiffuseShadingTable(vol);
