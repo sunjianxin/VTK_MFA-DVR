@@ -28,7 +28,6 @@
 #include <cmath>
 
 #include "../../../mfa/include/mfa/mfa.hpp"
-// #include "/Users/jianxinsun/research/intern/mfa/include/mfa/mfa.hpp"
 #include "../../../mfa/include/diy/include/diy/master.hpp"
 #include "../../external/config.h"
 #if !defined(SHADEON)

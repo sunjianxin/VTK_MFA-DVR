@@ -27,6 +27,14 @@
 
 #include <cmath>
 
+#include "../../../mfa/include/mfa/mfa.hpp"
+#include "../../../mfa/include/diy/include/diy/master.hpp"
+#include "../../external/config.h"
+#if defined(SHADEON)
+#include "../../external/opts.h"
+#include "../../external/block.hpp"
+#endif
+
 vtkStandardNewMacro(vtkFixedPointVolumeRayCastCompositeShadeHelper);
 
 // Construct a new vtkFixedPointVolumeRayCastCompositeShadeHelper with default values
@@ -284,6 +292,9 @@ template <class T>
 void vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilin(
   T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
 {
+  if (threadID == 0) {
+    cerr << "Trilinear shading simple" << threadID << endl;
+  }
   VTKKWRCHelper_InitializationAndLoopStartShadeTrilin();
   VTKKWRCHelper_InitializeCompositeOneTrilin();
   VTKKWRCHelper_InitializeCompositeOneShadeTrilin();
@@ -332,6 +343,125 @@ void vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilin(
   VTKKWRCHelper_IncrementAndLoopEnd();
 }
 
+// Calculating diffuse and specular coefficients from gradients and light setting.
+void getDiffuseSpecularCoefficients(double viewDirection[3],
+                                    double lightDirection[3],
+                                    double lightAmbientColor[3],
+                                    double lightDiffuseColor[3],
+                                    double lightSpecularColor[3],
+                                    double lightIntensity,
+                                    double material[4],
+                                    double gx,
+                                    double gy,
+                                    double gz,
+                                    // double* diffuseCoefficients,
+                                    // double* specularCoefficients)
+                                    unsigned short* diffuseCoefficients,
+                                    unsigned short* specularCoefficients)
+
+{
+  double half_x, half_y, half_z;
+  double g_dot_l, g_dot_h, g_dot_v;
+  double Ka, Es, Kd_intensity, Ks_intensity;
+  double mag, specular_value;
+  float dr, dg, db, sr, sg, sb;
+  
+  half_x = lightDirection[0] - viewDirection[0];
+  half_y = lightDirection[1] - viewDirection[1];
+  half_z = lightDirection[2] - viewDirection[2];
+
+  mag = sqrt(static_cast<double>(half_x * half_x + half_y * half_y + half_z * half_z));
+
+  if (mag != 0.0)
+  {
+    half_x /= mag;
+    half_y /= mag;
+    half_z /= mag;
+  }
+
+  Ka = material[0] * lightIntensity;
+  Es = material[3];
+  Kd_intensity = material[1] * lightIntensity;
+  Ks_intensity = material[2] * lightIntensity;
+      
+  g_dot_l = gx * lightDirection[0] + gy * lightDirection[1] + gz * lightDirection[2];
+  g_dot_h = gx * half_x + gy * half_y + gz * half_z;
+  g_dot_v = gx * viewDirection[0] + gy * viewDirection[1] + gz * viewDirection[2];
+  if (g_dot_v > 0.0) {
+    g_dot_l = -g_dot_l;
+    g_dot_h = -g_dot_h;
+  }
+
+  dr = static_cast<float>(Ka*lightAmbientColor[0]);
+  dg = static_cast<float>(Ka*lightAmbientColor[1]);
+  db = static_cast<float>(Ka*lightAmbientColor[2]);
+  sr = 0;
+  sg = 0;
+  sb = 0;
+  if (g_dot_l > 0)
+  {
+    dr += static_cast<float>(Kd_intensity * g_dot_l * lightDiffuseColor[0]);
+    dg += static_cast<float>(Kd_intensity * g_dot_l * lightDiffuseColor[1]);
+    db += static_cast<float>(Kd_intensity * g_dot_l * lightDiffuseColor[2]);
+
+    if (g_dot_h > 0.001)
+    {
+      specular_value =
+        Ks_intensity * pow(static_cast<double>(g_dot_h), static_cast<double>(Es));
+      sr += static_cast<float>(specular_value * lightSpecularColor[0]);
+      sg += static_cast<float>(specular_value * lightSpecularColor[1]);
+      sb += static_cast<float>(specular_value * lightSpecularColor[2]);
+    }
+  }
+
+  diffuseCoefficients[0] = static_cast<unsigned short>(dr * VTKKW_FP_SCALE + 0.5);
+  diffuseCoefficients[1] = static_cast<unsigned short>(dg * VTKKW_FP_SCALE + 0.5);
+  diffuseCoefficients[2] = static_cast<unsigned short>(db * VTKKW_FP_SCALE + 0.5);
+  specularCoefficients[0] = static_cast<unsigned short>(sr * VTKKW_FP_SCALE + 0.5);
+  specularCoefficients[1] = static_cast<unsigned short>(sg * VTKKW_FP_SCALE + 0.5);
+  specularCoefficients[2] = static_cast<unsigned short>(sb * VTKKW_FP_SCALE + 0.5);
+}
+
+// This is the MFA version of the method above.
+template <class T>
+void vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilinMfa(
+  T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
+{
+#if defined(SHADEON)
+  if (threadID == 0) {
+    cerr << "MFA shading simple" << threadID << endl;
+  }
+  MFARCHelper_InitializationValue();
+  MFARCHelper_InitializationGradient();
+
+  VTKKWRCHelper_InitializationAndLoopStartShadeTrilin();
+  VTKKWRCHelper_InitializeCompositeOneTrilin();
+  VTKKWRCHelper_InitializeCompositeOneShadeTrilin();
+  // VTKKWRCHelper_SpaceLeapSetup(); // Disable for MFA-DVR
+
+  for (k = 0; k < numSteps; k++)
+  {
+    if (k)
+    {
+      mapper->FixedPointIncrement(pos, dir);
+    }
+
+    // VTKKWRCHelper_SpaceLeapCheck(); // Disable for MFA-DVR
+
+    MFARCHelper_Decode_ColorScalar(val);
+
+    VTKKWRCHelper_LookupColorUS(colorTable[0], scalarOpacityTable[0], val, tmp);
+
+    MFARCHelper_DecodeNormal();
+    MFARCHelper_InterpolateShading(diffuseCoefficients, specularCoefficients, tmp); 
+    VTKKWRCHelper_CompositeColorAndCheckEarlyTermination(color, tmp, remainingOpacity);
+  }
+
+  VTKKWRCHelper_SetPixelColor(imagePtr, color, remainingOpacity);
+  VTKKWRCHelper_IncrementAndLoopEnd();
+#endif
+}
+
 // This method is used when the interpolation type is linear and the data
 // has one component and scale != 1.0 or shift != 0.0. In the inner loop we
 // get the data value for the eight cell corners (if we have changed cells)
@@ -346,6 +476,9 @@ template <class T>
 void vtkFixedPointCompositeShadeHelperGenerateImageOneTrilin(
   T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
 {
+  if (threadID == 0) {
+    cerr << "Trilinear shading non-simple" << threadID << endl;
+  }
   VTKKWRCHelper_InitializationAndLoopStartShadeTrilin();
   VTKKWRCHelper_InitializeCompositeOneTrilin();
   VTKKWRCHelper_InitializeCompositeOneShadeTrilin();
@@ -391,6 +524,48 @@ void vtkFixedPointCompositeShadeHelperGenerateImageOneTrilin(
 
   VTKKWRCHelper_SetPixelColor(imagePtr, color, remainingOpacity);
   VTKKWRCHelper_IncrementAndLoopEnd();
+}
+
+// This is the MFA version of the method above.
+template <class T>
+void vtkFixedPointCompositeShadeHelperGenerateImageOneTrilinMFA(
+  T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
+{
+#if defined(SHADEON)
+  if (threadID == 0) {
+    cerr << "MFA shading non-simple" << endl;
+  }
+
+  MFARCHelper_InitializationValue();
+  MFARCHelper_InitializationGradient();
+
+  VTKKWRCHelper_InitializationAndLoopStartShadeTrilin();
+  VTKKWRCHelper_InitializeCompositeOneTrilin();
+  VTKKWRCHelper_InitializeCompositeOneShadeTrilin();
+  // VTKKWRCHelper_SpaceLeapSetup(); // Disable for MFA-DVR
+  
+  int needToSampleDirection = 0;
+  for (k = 0; k < numSteps; k++)
+  {
+    if (k)
+    {
+      mapper->FixedPointIncrement(pos, dir);
+    }
+
+    // VTKKWRCHelper_SpaceLeapCheck(); // Disable for MFA-DVR
+    // VTKKWRCHelper_CroppingCheckTrilin(pos);
+
+    MFARCHelper_Decode_NonColorScalar(val);
+    VTKKWRCHelper_LookupColorUS(colorTable[0], scalarOpacityTable[0], val, tmp);
+
+    MFARCHelper_DecodeNormal();
+    MFARCHelper_InterpolateShading(diffuseCoefficients, specularCoefficients, tmp);
+    VTKKWRCHelper_CompositeColorAndCheckEarlyTermination(color, tmp, remainingOpacity);
+  }
+
+  VTKKWRCHelper_SetPixelColor(imagePtr, color, remainingOpacity);
+  VTKKWRCHelper_IncrementAndLoopEnd();
+#endif
 }
 
 // This method is used when the interpolation type is linear, the data has
@@ -724,19 +899,33 @@ void vtkFixedPointVolumeRayCastCompositeShadeHelper::GenerateImage(
       // Scale == 1.0 and shift == 0.0 - simple case (faster)
       if (mapper->GetTableScale()[0] == 1.0 && mapper->GetTableShift()[0] == 0.0)
       {
-        switch (scalarType)
-        {
-          vtkTemplateMacro(vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilin(
-            static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
-        }
+        if (!mapper->GetUseMfa()) {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilin(static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
+        } else {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilinMfa(static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
+        } 
       }
       // Scale != 1.0 or shift != 0.0 - must apply scale/shift in inner loop
       else
       {
-        switch (scalarType)
-        {
-          vtkTemplateMacro(vtkFixedPointCompositeShadeHelperGenerateImageOneTrilin(
-            static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+        if (!mapper->GetUseMfa()) {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeShadeHelperGenerateImageOneTrilin(
+              static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
+        } else {
+          switch (scalarType)
+          {
+            vtkTemplateMacro(vtkFixedPointCompositeShadeHelperGenerateImageOneTrilinMFA(
+             static_cast<VTK_TT*>(data), threadID, threadCount, mapper, vol));
+          }
         }
       }
     }

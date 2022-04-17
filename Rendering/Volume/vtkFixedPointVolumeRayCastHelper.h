@@ -1278,16 +1278,23 @@
   mfa::FastDecodeInfo<real_t> di(decoder);                                                         \
   /* Retrieve dataset size and update scalar for POS */                                            \
   int size =  mapper->GetMfaSize() - 1;                                                            \
-  /* std::string dataset =  mapper->GetDataset(); */                                               \
   double recip = 1 / ((size*32767.0) + 0.5);                                                       \
   /* Place holder for getting value */                                                             \
   VectorX<double> param(3);                                                                        \
   VectorX<double> out_pt(1);                                                                       \
-  unsigned short val_2;                                                                            \
   double bounds_lower = b->bounds_mins[3];                                                         \
   double bounds_upper = b->bounds_maxs[3];                                                         \
   real_t value_extent_recip = 1 / (bounds_upper - bounds_lower);
 
+#define MFARCHelper_InitializationGradient()                                                       \
+  di.ResizeDers(1);                                                                                \
+  /* Place holder for getting derivative */                                                        \
+  VectorX<real_t> gradient(3);                                                                     \
+  /* For rescaling the derivative */                                                               \
+  VectorX<real_t> extents = b->bounds_maxs - b->bounds_mins;                                       \
+  /* Place holder for getting diffuse and specular coefficients */                                 \
+  unsigned short diffuseCoefficients[3];                                                           \
+  unsigned short specularCoefficients[3];
 
 #define MFARCHelper_Decode_ColorScalar(VAL)                                                        \
   param(0) = pos[0] * recip;                                                                       \
@@ -1324,6 +1331,38 @@
   if (VAL < 0) {                                                                                   \
     VAL = 0;                                                                                       \
   }
+
+#define MFARCHelper_DecodeNormal()                                                                 \
+    param(0) = pos[0] * recip;                                                                     \
+    param(1) = pos[1] * recip;                                                                     \
+    param(2) = pos[2] * recip;                                                                     \
+    /* getting normal from MFA */                                                                  \
+    decoder.FastGrad(param, di, t, gradient);                                                      \
+    gradient(0) *= extents(0);                                                                     \
+    gradient(1) *= extents(1);                                                                     \
+    gradient(2) *= extents(2);                                                                     \
+    gradient.normalize();                                                                          \
+    /* getting shading related coefficients */                                                     \
+    getDiffuseSpecularCoefficients(mapper->GetViewDirection(),                                     \
+                                   mapper->GetLightDirection(),                                    \
+                                   mapper->GetLightAmbientColor(),                                 \
+                                   mapper->GetLightDiffuseColor(),                                 \
+                                   mapper->GetLightSpecularColor(),                                \
+                                   mapper->GetLightIntensity(),                                    \
+                                   mapper->GetMaterial(),                                          \
+                                   gradient(0),                                                    \
+                                   gradient(1),                                                    \
+                                   gradient(2),                                                    \
+                                   diffuseCoefficients,                                            \
+                                   specularCoefficients);
+
+#define MFARCHelper_InterpolateShading(_tmpDColor, _tmpSColor, COLOR)                              \
+  COLOR[0] = static_cast<unsigned short>((_tmpDColor[0] * COLOR[0] + 0x7fff) >> VTKKW_FP_SHIFT);   \
+  COLOR[1] = static_cast<unsigned short>((_tmpDColor[1] * COLOR[1] + 0x7fff) >> VTKKW_FP_SHIFT);   \
+  COLOR[2] = static_cast<unsigned short>((_tmpDColor[2] * COLOR[2] + 0x7fff) >> VTKKW_FP_SHIFT);   \
+  COLOR[0] += (_tmpSColor[0] * COLOR[3] + 0x7fff) >> VTKKW_FP_SHIFT;                               \
+  COLOR[1] += (_tmpSColor[1] * COLOR[3] + 0x7fff) >> VTKKW_FP_SHIFT;                               \
+  COLOR[2] += (_tmpSColor[2] * COLOR[3] + 0x7fff) >> VTKKW_FP_SHIFT;
 
 #define VTKKWRCHelper_MIPSpaceLeapCheckMulti(COMP, FLIP) mmvalid[COMP]
 

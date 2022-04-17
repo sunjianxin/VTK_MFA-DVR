@@ -1,6 +1,6 @@
 #include <vector>
 
-// #define SHADEON
+#define SHADEON
 // #define TIME
 #define THREADID 0
 // #define PROFILE
