@@ -25,7 +25,9 @@ mkdir build
 cd build
 ccmake ..
 ```
-3. Build and install
+3. Configure VTK_MFA-DVR using config file
+Shade can be turn on and off in *external/config.h file*
+4. Build and install
 ```bash
 make install
 ```
