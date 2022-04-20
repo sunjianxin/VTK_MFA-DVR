@@ -550,9 +550,7 @@ void vtkFixedPointVolumeRayCastMapperComputeGradients(T* dataPtr, int dim[3], do
 // Construct a new vtkFixedPointVolumeRayCastMapper with default values
 vtkFixedPointVolumeRayCastMapper::vtkFixedPointVolumeRayCastMapper()
 {
-  // this->SampleDistance = 1.0; // used for 8x8x8x gaussian beam without shade
-  // this->SampleDistance = 0.015625; // used for 8x8x8 gaussian beam with shade
-  this->SampleDistance = 0.05; // used for 8x8x8 ML with shade
+  this->SampleDistance = 1.0;
   this->InteractiveSampleDistance = 2.0;
   this->ImageSampleDistance = 1.0;
   this->MinimumImageSampleDistance = 1.0;
