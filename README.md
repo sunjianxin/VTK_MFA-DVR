@@ -31,4 +31,5 @@ Shade can be turn on and off in *external/config.h file*
 ```bash
 make install
 ```
-
+### Example
+To visualize volumetric data usimg MFA-DVR, please find the examples with detailed instruction in <a href="https://github.com/sunjianxin/example_MFA-DVR" target="_blank">example_MFA-DVR</a>.
