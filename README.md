@@ -5,7 +5,7 @@ Created by <a href="https://github.com/sunjianxin" target="_blank">Jianxin Sun</
 Demo video can be found <a href="https://youtu.be/FHzvs5nITpw" target="_blank">here</a>.
 
 ### Introduction
-This work is the implementation of MFA-DVR, direct volume rendering pipeline using MFA model, on top of <a href="https://github.com/Kitware/VTK" target="_blank">VTK</a> for best accessibility to scieintific visualization community. The VTK version used is 9.0.3. 
+This work is the implementation of MFA-DVR, direct volume rendering pipeline using MFA model, on top of <a href="https://github.com/Kitware/VTK" target="_blank">VTK</a> for accessibility to scieintific visualization community. The VTK version used is 9.0.3. 
    
 ### Installation
 1. Get VTK_MFA-DVR source code
