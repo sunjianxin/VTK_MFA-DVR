@@ -1,9 +1,8 @@
 ## MFA-DVR: *Direct Volume Rendering of MFA Models*
 Created by <a href="https://github.com/sunjianxin" target="_blank">Jianxin Sun</a>, <a href="http://vis.unl.edu/~yu/" target="_blank">Hongfeng Yu</a> from University of Nebraska-Lincoln, and <a href="https://mathweb.ucsd.edu/~dlenz/" target="_blank">David Lenz</a>, <a href="https://www.mcs.anl.gov/~tpeterka/" target="_blank">Tom Peterka</a> from Argonne National Laboratory
 
-![pred152_3D](doc/demo.gif)
-
 ![results](https://github.com/sunjianxin/VTK_MFA-DVR/blob/main/doc/teaser.png)
+Demo video can be seen <a href="https://youtu.be/FHzvs5nITpw" target="_blank">here</a>
 
 ### Introduction
 This work is the implementation of MFA-DVR, direct volume rendering pipeline using MFA model, on top of <a href="https://github.com/Kitware/VTK" target="_blank">VTK</a> for best accessibility to scieintific visualization community. The VTK version used is 9.0.3. 
