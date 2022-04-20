@@ -1,12 +1,6 @@
 #include <vector>
 
 #define SHADEON
-// #define TIME
-#define THREADID 0
-// #define PROFILE
-// #define GRADIENT_VTK
-// #define VALUE_VTK
-// #define SKIPUPDATINGSHADINGTABLE
 
 struct sample {
     int j; // row index

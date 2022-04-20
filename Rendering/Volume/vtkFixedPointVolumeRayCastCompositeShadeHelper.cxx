@@ -292,9 +292,6 @@ template <class T>
 void vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilin(
   T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
 {
-  if (threadID == 0) {
-    cerr << "Trilinear shading simple" << threadID << endl;
-  }
   VTKKWRCHelper_InitializationAndLoopStartShadeTrilin();
   VTKKWRCHelper_InitializeCompositeOneTrilin();
   VTKKWRCHelper_InitializeCompositeOneShadeTrilin();
@@ -428,9 +425,6 @@ void vtkFixedPointCompositeShadeHelperGenerateImageOneSimpleTrilinMfa(
   T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
 {
 #if defined(SHADEON)
-  if (threadID == 0) {
-    cerr << "MFA shading simple" << threadID << endl;
-  }
   MFARCHelper_InitializationValue();
   MFARCHelper_InitializationGradient();
 
@@ -476,9 +470,6 @@ template <class T>
 void vtkFixedPointCompositeShadeHelperGenerateImageOneTrilin(
   T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
 {
-  if (threadID == 0) {
-    cerr << "Trilinear shading non-simple" << threadID << endl;
-  }
   VTKKWRCHelper_InitializationAndLoopStartShadeTrilin();
   VTKKWRCHelper_InitializeCompositeOneTrilin();
   VTKKWRCHelper_InitializeCompositeOneShadeTrilin();
@@ -532,9 +523,6 @@ void vtkFixedPointCompositeShadeHelperGenerateImageOneTrilinMFA(
   T* data, int threadID, int threadCount, vtkFixedPointVolumeRayCastMapper* mapper, vtkVolume* vol)
 {
 #if defined(SHADEON)
-  if (threadID == 0) {
-    cerr << "MFA shading non-simple" << endl;
-  }
 
   MFARCHelper_InitializationValue();
   MFARCHelper_InitializationGradient();
