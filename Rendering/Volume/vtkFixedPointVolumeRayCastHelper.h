@@ -1272,8 +1272,9 @@
 #define MFARCHelper_InitializationValue()                                                          \
   /* Retrieve MFA reference pointer */                                                             \
   Block<real_t>* b = (Block<real_t>*)(mapper->GetMfaBlock());                                      \
-  mfa::MFA_Data<real_t>& mfa_data = *(b->vars[0].mfa_data);                                        \
-  TensorProduct<real_t>&  t = mfa_data.tmesh.tensor_prods[0];                                      \
+  // mfa::MFA_Data<real_t>& mfa_data = *(b->vars[0].mfa_data);                                        
+  const mfa::MFA_Data<real_t>& mfa_data = b->mfa->var(0); \
+  const TensorProduct<real_t>&  t = mfa_data.tmesh.tensor_prods[0];                                      \
   mfa::Decoder<real_t> decoder(mfa_data, 0);                                                       \
   mfa::FastDecodeInfo<real_t> di(decoder);                                                         \
   /* Retrieve dataset size and update scalar for POS */                                            \
